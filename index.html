@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hatványgyakorló</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Elrendezés: négyzetrácsos füzetlap. Bal oldalon a tételek listája, jobbra a feladatlap, alatta a szabály. */
+:root {
+  --paper: #f2f6fc;
+  --grid: #cfdcee;
+  --sheet: #fbfdff;
+  --ink: #17264a;
+  --ink-soft: #4d5c80;
+  --pen: #2245c4;
+  --pen-soft: #dfe7fb;
+  --red: #c93434;
+  --red-soft: #fbe4e4;
+  --green: #1c7d54;
+  --green-soft: #ddf3e8;
+  --line: #b9c8df;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-math: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1730; --grid: #1c2849; --sheet: #162040; --ink: #e7edfb; --ink-soft: #9aa9ce;
+    --pen: #86a2ff; --pen-soft: #22305e; --red: #ff8a8a; --red-soft: #4a2230;
+    --green: #67d8a5; --green-soft: #17403a; --line: #2d3c68; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1730; --grid: #1c2849; --sheet: #162040; --ink: #e7edfb; --ink-soft: #9aa9ce;
+  --pen: #86a2ff; --pen-soft: #22305e; --red: #ff8a8a; --red-soft: #4a2230;
+  --green: #67d8a5; --green-soft: #17403a; --line: #2d3c68; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+
+/* Fejléc */
+.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
+.brand h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.4rem); line-height: 1.05; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.brand p { margin: 4px 0 0; color: var(--ink-soft); }
+.tally { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { background: var(--sheet); border: 1px solid var(--line); padding: 6px 12px; min-width: 104px; }
+.chip small { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+.chip b { font-family: var(--f-mono); font-weight: 500; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+
+/* Elrendezés */
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* Tételek */
+.topics { display: grid; gap: 8px; }
+.topic {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center;
+  text-align: left; width: 100%; font: inherit; color: inherit; cursor: pointer;
+  background: var(--sheet); border: 1px solid var(--line); padding: 10px 12px;
+}
+.topic:hover { border-color: var(--pen); }
+.topic:focus-visible, .lv:focus-visible, .btn:focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; }
+.topic[aria-pressed="true"] { border-color: var(--pen); background: var(--pen-soft); box-shadow: 3px 3px 0 var(--pen); }
+.topic .nm { font-weight: 600; }
+.topic .fm { grid-column: 1 / -1; font-family: var(--f-math); font-size: 1.1rem; color: var(--ink-soft); }
+.topic .sc { font-family: var(--f-mono); font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+@media (max-width: 820px) { .topics { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); } }
+
+/* Munkaterület */
+.work { display: grid; gap: 16px; min-width: 0; }
+.levels { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.levels > span { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-right: 4px; }
+.lv { font: inherit; cursor: pointer; background: var(--sheet); color: var(--ink); border: 1px solid var(--line); padding: 5px 14px; }
+.lv[aria-checked="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.sheet { background: var(--sheet); border: 1px solid var(--ink); box-shadow: 5px 5px 0 var(--line); padding: 22px clamp(14px, 4vw, 30px) 20px; min-width: 0; }
+.kind { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 2px; }
+.ask { margin: 0 0 6px; font-weight: 500; }
+.q {
+  font-family: var(--f-math); font-size: clamp(1.5rem, 5.4vw, 2.5rem); line-height: 2.3;
+  overflow-x: auto; overflow-y: hidden; padding: 6px 0; white-space: nowrap;
+}
+.q i { font-style: italic; }
+.q sup { font-size: .62em; line-height: 0; vertical-align: .75em; }
+.q sup.sl { vertical-align: .8em; }
+.slot {
+  font-family: var(--f-mono); font-size: inherit; color: var(--pen); text-align: center;
+  width: 2.6em; height: 1.45em; padding: 0; margin: 0 .1em;
+  background: var(--pen-soft); border: 0; border-bottom: 2px solid var(--pen); border-radius: 0;
+}
+.slot:focus { outline: 2px solid var(--pen); outline-offset: 1px; }
+.slot.ok { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+.slot.bad { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.slot.shown { background: transparent; border-color: var(--ink-soft); color: var(--ink); }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.7; margin: 0 .12em; }
+.frac > span:first-child { border-bottom: 2px solid var(--ink); padding: 0 .25em; }
+.frac > span:last-child { padding: 0 .25em; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.btn { font: inherit; font-weight: 600; cursor: pointer; padding: 9px 18px; border: 1px solid var(--ink); background: var(--sheet); color: var(--ink); }
+.btn.primary { background: var(--pen); border-color: var(--pen); color: var(--paper); }
+:root[data-theme="dark"] .btn.primary { color: #0f1730; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0f1730; } }
+.btn:hover { filter: brightness(1.06); }
+.btn[hidden] { display: none; }
+
+.fb { margin-top: 14px; min-height: 1.5em; font-weight: 600; }
+.fb.ok { color: var(--green); }
+.fb.bad { color: var(--red); }
+.fb.info { color: var(--ink-soft); font-weight: 500; }
+
+.solution { margin-top: 12px; padding: 10px 14px; background: var(--paper); border: 1px dashed var(--line); }
+.solution h3 { margin: 0 0 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+.solution .math { font-family: var(--f-math); font-size: 1.25rem; overflow-x: auto; white-space: nowrap; }
+.solution .math sup { font-size: .65em; line-height: 0; }
+
+.rule { background: var(--sheet); border: 1px solid var(--line); padding: 14px 18px; min-width: 0; }
+.rule h2 { margin: 0 0 6px; font-family: var(--f-display); font-size: 1.05rem; font-weight: 700; }
+.rule .big { font-family: var(--f-math); font-size: clamp(1.3rem, 4.4vw, 1.8rem); color: var(--pen); overflow-x: auto; white-space: nowrap; }
+.rule .big sup { font-size: .62em; line-height: 0; }
+.rule p { margin: 6px 0 0; color: var(--ink-soft); max-width: 62ch; }
+.rule.locked .big { filter: blur(6px); user-select: none; }
+
+.foot { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-top: 4px; color: var(--ink-soft); font-size: 13px; }
+.linkbtn { font: inherit; background: none; border: 0; color: var(--ink-soft); text-decoration: underline; cursor: pointer; padding: 4px 0; }
+.linkbtn.warn { color: var(--red); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .topic, .btn { transition: border-color .12s, box-shadow .12s, filter .12s; }
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Hatványgyakorló</h1>
+      <p>A hatványozás azonosságai, véletlenszerű feladatokkal.</p>
+    </div>
+    <div class="tally" aria-label="Összesítés">
+      <div class="chip"><small>Sorozat</small><b id="tStreak">0</b></div>
+      <div class="chip"><small>Elsőre jó</small><b id="tTotal">0 / 0</b></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="topics" id="topics" aria-label="Azonosságok"></nav>
+
+    <section class="work">
+      <div class="levels" role="radiogroup" aria-label="Nehézség" id="levels">
+        <span>Nehézség</span>
+      </div>
+
+      <article class="sheet" aria-labelledby="qKind">
+        <p class="kind" id="qKind"></p>
+        <p class="ask" id="qAsk"></p>
+        <div class="q" id="q"></div>
+        <div class="actions">
+          <button class="btn primary" id="bCheck" type="button">Ellenőrzés</button>
+          <button class="btn" id="bHint" type="button">Segítség</button>
+          <button class="btn" id="bReveal" type="button" hidden>Megoldás megmutatása</button>
+          <button class="btn primary" id="bNext" type="button" hidden>Következő feladat</button>
+        </div>
+        <div class="fb" id="fb" role="status" aria-live="polite"></div>
+        <div class="solution" id="sol" hidden>
+          <h3>Levezetés</h3>
+          <div class="math" id="solMath"></div>
+        </div>
+      </article>
+
+      <aside class="rule" id="rule" aria-label="Szabály">
+        <h2 id="ruleTitle"></h2>
+        <div class="big" id="ruleBig"></div>
+        <p id="ruleText"></p>
+      </aside>
+
+      <div class="foot">
+        <span>A haladás ezen az eszközön, a böngészőben marad meg.</span>
+        <button class="linkbtn" id="bReset" type="button">Eredmények törlése</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ===== MOTOR: feladatgenerátorok. Új tételt a TOPICS listába kell felvenni. ===== */
+// ENGINE START
+const r = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = a => a[r(0, a.length - 1)];
+const rnz = (a, b) => { let v = 0; while (v === 0) v = r(a, b); return v; };
+const minus = n => String(n).replace('-', '−');
+const par = n => n < 0 ? '(' + minus(n) + ')' : String(n);
+const bs = b => typeof b === 'number' ? String(b) : '<i>' + b + '</i>';
+const pw = (b, e) => e === 1 ? bs(b) : bs(b) + '<sup>' + minus(e) + '</sup>';
+const sup = (b, e) => bs(b) + '<sup>' + e + '</sup>';
+const frac = (n, d) => '<span class="frac"><span>' + n + '</span><span>' + d + '</span></span>';
+const LETTERS = ['a', 'b', 'c', 'd', 'x', 'y', 'z', 't', 'u', 'v'];
+const NUMS = [2, 3, 5, 7, 10];
+
+function pickBase() { return Math.random() < 0.65 ? pick(LETTERS) : pick(NUMS); }
+function pickTwo() {
+  if (Math.random() < 0.75) { const a = pick(LETTERS); let b = a; while (b === a) b = pick(LETTERS); return [a, b]; }
+  const a = pick(NUMS); let b = a; while (b === a) b = pick(NUMS); return [a, b];
+}
+const slot = a => ({ a, sup: true });
+
+function genMul(L) {
+  const b = pickBase();
+  let ex;
+  if (L === 1) ex = [r(1, 9), r(1, 9)];
+  else if (L === 2) ex = [rnz(-7, 9), rnz(-7, 9)];
+  else ex = [rnz(-6, 9), rnz(-6, 9), rnz(-6, 9)];
+  const sum = ex.reduce((s, x) => s + x, 0);
+  const lhs = ex.map(e => pw(b, e)).join(' · ');
+  return {
+    kind: 'mul', ask: 'Írd be a hiányzó kitevőt.',
+    parts: [lhs + ' = ' + bs(b), slot(sum)],
+    steps: lhs + ' = ' + bs(b) + '<sup>' + ex.map(par).join(' + ') + '</sup> = ' + pw(b, sum),
+    key: lhs, meta: { kind: 'mul', ex }
+  };
+}
+
+function genDiv(L) {
+  const b = pickBase();
+  let lhs, ans, exp;
+  if (L === 1) {
+    const m = r(2, 12), n = r(1, m - 1);
+    lhs = pw(b, m) + ' : ' + pw(b, n); ans = m - n;
+    exp = bs(b) + '<sup>' + m + ' − ' + n + '</sup>';
+    return mk([m, n]);
+  }
+  if (L === 2) {
+    const m = rnz(-6, 10), n = rnz(-6, 10);
+    lhs = pw(b, m) + ' : ' + pw(b, n); ans = m - n;
+    exp = bs(b) + '<sup>' + par(m) + ' − ' + par(n) + '</sup>';
+    return mk([m, n]);
+  }
+  const m = rnz(-6, 9), n = rnz(-6, 9), k = rnz(-6, 9);
+  lhs = pw(b, m) + ' · ' + pw(b, n) + ' : ' + pw(b, k); ans = m + n - k;
+  exp = bs(b) + '<sup>' + par(m) + ' + ' + par(n) + ' − ' + par(k) + '</sup>';
+  return mk([m, n, k]);
+  function mk(ex) {
+    return {
+      kind: 'div', ask: 'Írd be a hiányzó kitevőt.',
+      parts: [lhs + ' = ' + bs(b), slot(ans)],
+      steps: lhs + ' = ' + exp + ' = ' + pw(b, ans),
+      key: lhs, meta: { kind: 'div', ex }
+    };
+  }
+}
+
+function genProdQuot(L, isQuot) {
+  const [b1, b2] = pickTwo();
+  let p, q, n;
+  if (L === 1) { p = 1; q = 1; n = r(2, 6); }
+  else if (L === 2) { p = r(1, 5); q = r(1, 5); n = r(2, 4); }
+  else { p = rnz(-4, 5); q = rnz(-4, 5); n = pick([-3, -2, 2, 3, 4]); }
+  const A = pw(b1, p), B = pw(b2, q);
+  const nn = '<sup>' + minus(n) + '</sup>';
+  const pn = p * n, qn = q * n;
+  let parts, steps;
+  if (!isQuot) {
+    parts = ['(' + A + ' · ' + B + ')' + nn + ' = ' + bs(b1), slot(pn), ' · ' + bs(b2), slot(qn)];
+    steps = '(' + A + ' · ' + B + ')' + nn + ' = ' + bs(b1) + '<sup>' + par(p) + ' · ' + par(n) + '</sup> · ' + bs(b2) + '<sup>' + par(q) + ' · ' + par(n) + '</sup> = ' + pw(b1, pn) + ' · ' + pw(b2, qn);
+  } else {
+    parts = ['(' + frac(A, B) + ')' + nn + ' = ', { frac: [[bs(b1), slot(pn)], [bs(b2), slot(qn)]] }];
+    steps = '(' + frac(A, B) + ')' + nn + ' = ' + frac(bs(b1) + '<sup>' + par(p) + ' · ' + par(n) + '</sup>', bs(b2) + '<sup>' + par(q) + ' · ' + par(n) + '</sup>') + ' = ' + frac(pw(b1, pn), pw(b2, qn));
+  }
+  return {
+    kind: isQuot ? 'quot' : 'prod',
+    ask: 'Írd be a két hiányzó kitevőt.',
+    parts, steps, key: parts.map(x => typeof x === 'string' ? x : '#').join(''),
+    meta: { kind: isQuot ? 'quot' : 'prod', b1, b2, p, q, n, ans: [pn, qn] }
+  };
+}
+
+function genPowPow(L) {
+  const b = pickBase();
+  let lhs, ans, exp, ex;
+  if (L === 1) {
+    const m = r(2, 6), n = r(2, 5);
+    lhs = '(' + pw(b, m) + ')<sup>' + n + '</sup>'; ans = m * n;
+    exp = bs(b) + '<sup>' + m + ' · ' + n + '</sup>'; ex = [m, n];
+  } else if (L === 2) {
+    const m = rnz(-5, 6), n = pick([-3, -2, 2, 3, 4, 5]);
+    lhs = '(' + pw(b, m) + ')<sup>' + minus(n) + '</sup>'; ans = m * n;
+    exp = bs(b) + '<sup>' + par(m) + ' · ' + par(n) + '</sup>'; ex = [m, n];
+  } else if (Math.random() < 0.5) {
+    const m = rnz(-3, 4), n = pick([-2, 2, 3]), k = pick([2, 3, -2]);
+    lhs = '((' + pw(b, m) + ')<sup>' + minus(n) + '</sup>)<sup>' + minus(k) + '</sup>'; ans = m * n * k;
+    exp = bs(b) + '<sup>' + par(m) + ' · ' + par(n) + ' · ' + par(k) + '</sup>'; ex = [m, n, k, 'nest'];
+  } else {
+    const m = rnz(-3, 4), n = pick([-2, 2, 3]), k = rnz(-8, 8);
+    lhs = '(' + pw(b, m) + ')<sup>' + minus(n) + '</sup> · ' + pw(b, k); ans = m * n + k;
+    exp = bs(b) + '<sup>' + par(m) + ' · ' + par(n) + ' + ' + par(k) + '</sup>'; ex = [m, n, k, 'mix'];
+  }
+  return {
+    kind: 'pow', ask: 'Írd be a hiányzó kitevőt.',
+    parts: [lhs + ' = ' + bs(b), slot(ans)],
+    steps: lhs + ' = ' + exp + ' = ' + pw(b, ans),
+    key: lhs, meta: { kind: 'pow', ex }
+  };
+}
+
+const TOPICS = [
+  { id: 'mul', name: 'Szorzás', kind: 'Azonos alapú hatványok szorzása', formula: 'a<sup>m</sup> · a<sup>n</sup> = a<sup>m+n</sup>',
+    text: 'Azonos alapú hatványokat úgy szorzunk, hogy az alapot megtartjuk, a kitevőket pedig összeadjuk.', gen: genMul },
+  { id: 'div', name: 'Osztás', kind: 'Azonos alapú hatványok osztása', formula: 'a<sup>m</sup> : a<sup>n</sup> = a<sup>m−n</sup>',
+    text: 'Azonos alapú hatványokat úgy osztunk, hogy az alapot megtartjuk, a kitevőket kivonjuk egymásból (a ≠ 0).', gen: genDiv },
+  { id: 'prod', name: 'Szorzat hatványa', kind: 'Szorzat hatványozása', formula: '(a · b)<sup>n</sup> = a<sup>n</sup> · b<sup>n</sup>',
+    text: 'Szorzatot úgy hatványozunk, hogy minden tényezőt külön a hatványra emelünk.', gen: L => genProdQuot(L, false) },
+  { id: 'quot', name: 'Hányados hatványa', kind: 'Hányados hatványozása', formula: '(a / b)<sup>n</sup> = a<sup>n</sup> / b<sup>n</sup>',
+    text: 'Törtet úgy hatványozunk, hogy a számlálót és a nevezőt is külön a hatványra emeljük (b ≠ 0).', gen: L => genProdQuot(L, true) },
+  { id: 'pow', name: 'Hatvány hatványa', kind: 'Hatvány hatványozása', formula: '(a<sup>m</sup>)<sup>n</sup> = a<sup>m·n</sup>',
+    text: 'Hatványt úgy hatványozunk, hogy az alapot megtartjuk, a kitevőket összeszorozzuk.', gen: genPowPow },
+  { id: 'mixed', name: 'Vegyes', kind: 'Vegyes feladat', formula: 'mind az öt azonosság',
+    text: 'Előbb döntsd el, melyik azonosságot kell használni.', gen: null }
+];
+const LEVELS = [{ id: 1, name: 'Könnyű' }, { id: 2, name: 'Közepes' }, { id: 3, name: 'Nehéz' }];
+
+function makeQuestion(topicId, level, prevKey) {
+  const t = TOPICS.find(x => x.id === topicId);
+  let q, guard = 0;
+  do {
+    const src = t.gen ? t : pick(TOPICS.filter(x => x.gen));
+    q = src.gen(level);
+    q.topic = src.id;
+    guard++;
+  } while (q.key === prevKey && guard < 20);
+  return q;
+}
+// ENGINE END
+
+/* ===== Felület ===== */
+const KEY = 'hatvanygyakorlo.v1';
+const $ = id => document.getElementById(id);
+let state = { topic: 'mul', level: 1, streak: 0, stats: {} };
+let cur = null, answers = [], attempts = 0, finished = false, hintShown = false, prevKey = '';
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (s && typeof s === 'object') {
+      state.topic = TOPICS.some(t => t.id === s.topic) ? s.topic : 'mul';
+      state.level = [1, 2, 3].includes(s.level) ? s.level : 1;
+      state.streak = Number.isFinite(s.streak) ? s.streak : 0;
+      state.stats = s.stats && typeof s.stats === 'object' ? s.stats : {};
+    }
+  } catch (e) { /* nincs mentett adat */ }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* nem baj */ } }
+const stat = id => state.stats[id] || { ok: 0, done: 0 };
+
+function renderParts(parts) {
+  return parts.map(p => {
+    if (typeof p === 'string') return p;
+    if (p.frac) return '<span class="frac"><span>' + renderParts(p.frac[0]) + '</span><span>' + renderParts(p.frac[1]) + '</span></span>';
+    const i = answers.length; answers.push(p.a);
+    const inp = '<input class="slot" id="s' + i + '" data-i="' + i + '" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Hiányzó kitevő">';
+    return p.sup ? '<sup class="sl">' + inp + '</sup>' : inp;
+  }).join('');
+}
+const slots = () => Array.from(document.querySelectorAll('.slot'));
+
+function renderTopics() {
+  $('topics').innerHTML = TOPICS.map(t => {
+    const s = stat(t.id);
+    return '<button type="button" class="topic" data-id="' + t.id + '" aria-pressed="' + (t.id === state.topic) + '">' +
+      '<span class="nm">' + t.name + '</span><span class="sc">' + s.ok + ' / ' + s.done + '</span>' +
+      '<span class="fm">' + t.formula + '</span></button>';
+  }).join('');
+}
+function renderLevels() {
+  const box = $('levels');
+  box.querySelectorAll('.lv').forEach(n => n.remove());
+  LEVELS.forEach(l => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'lv'; b.dataset.id = l.id; b.textContent = l.name;
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(l.id === state.level));
+    box.appendChild(b);
+  });
+}
+function renderTally() {
+  let ok = 0, done = 0;
+  Object.values(state.stats).forEach(s => { ok += s.ok; done += s.done; });
+  $('tStreak').textContent = state.streak;
+  $('tTotal').textContent = ok + ' / ' + done;
+}
+function renderRule() {
+  const t = TOPICS.find(x => x.id === cur.topic);
+  const locked = state.topic === 'mixed' && !hintShown && !finished;
+  $('rule').classList.toggle('locked', locked);
+  $('ruleTitle').textContent = locked ? 'Melyik azonosság kell ide?' : t.kind;
+  $('ruleBig').innerHTML = locked ? t.formula : t.formula;
+  $('ruleText').textContent = locked ? 'Gondold végig, aztán kérj segítséget, ha elakadsz.' : t.text;
+}
+
+function newQuestion() {
+  cur = makeQuestion(state.topic, state.level, prevKey);
+  prevKey = cur.key;
+  answers = []; attempts = 0; finished = false; hintShown = false;
+  const t = TOPICS.find(x => x.id === (state.topic === 'mixed' ? 'mixed' : cur.topic));
+  $('qKind').textContent = state.topic === 'mixed' ? 'Vegyes feladat' : t.kind;
+  $('qAsk').textContent = cur.ask;
+  $('q').innerHTML = renderParts(cur.parts);
+  $('fb').className = 'fb'; $('fb').textContent = '';
+  $('sol').hidden = true;
+  $('bCheck').hidden = false; $('bHint').hidden = false; $('bReveal').hidden = true; $('bNext').hidden = true;
+  renderRule();
+  const first = slots()[0]; if (first) first.focus();
+}
+
+function parse(s) {
+  s = String(s).trim().replace(/[−–—]/g, '-').replace(/\s+/g, '');
+  return /^-?\d+$/.test(s) ? parseInt(s, 10) : null;
+}
+function finish(firstTry, credit) {
+  finished = true;
+  const s = stat(state.topic === 'mixed' ? 'mixed' : state.topic);
+  const id = state.topic;
+  const cs = state.stats[id] = { ok: s.ok, done: s.done + 1 };
+  if (credit) cs.ok += 1;
+  state.streak = firstTry ? state.streak + 1 : 0;
+  save(); renderTopics(); renderTally();
+  $('bCheck').hidden = true; $('bHint').hidden = true; $('bReveal').hidden = true; $('bNext').hidden = false;
+  $('solMath').innerHTML = cur.steps; $('sol').hidden = false;
+  renderRule();
+  $('bNext').focus();
+}
+function check() {
+  if (finished) return;
+  const ss = slots();
+  const vals = ss.map(s => parse(s.value));
+  if (ss.some((s, i) => s.value.trim() === '')) {
+    setFb('info', 'Tölts ki minden hiányzó kitevőt.'); return;
+  }
+  if (vals.some(v => v === null)) {
+    setFb('info', 'A kitevő egész szám legyen, például 5 vagy −3.'); return;
+  }
+  let all = true;
+  ss.forEach((s, i) => {
+    const good = vals[i] === answers[i];
+    s.classList.toggle('ok', good); s.classList.toggle('bad', !good);
+    if (!good) all = false;
+  });
+  attempts++;
+  if (all) {
+    ss.forEach(s => s.readOnly = true);
+    setFb('ok', attempts === 1 ? 'Helyes, elsőre!' : 'Helyes.');
+    finish(attempts === 1, attempts === 1);
+  } else {
+    hintShown = true; renderRule();
+    const wrong = ss.filter(s => s.classList.contains('bad'));
+    setFb('bad', wrong.length === ss.length ? 'Ez még nem jó. Nézd meg a szabályt, és próbáld újra.' : 'Egy része jó, a pirossal jelölt kitevőt javítsd.');
+    if (attempts >= 2) $('bReveal').hidden = false;
+    const f = wrong[0]; if (f) { f.focus(); f.select(); }
+  }
+}
+function reveal() {
+  slots().forEach((s, i) => { s.value = minus(answers[i]); s.readOnly = true; s.className = 'slot shown'; });
+  setFb('info', 'A megoldás látható. Ez a feladat nem számít elsőre jónak.');
+  finish(false, false);
+}
+function setFb(cls, msg) { $('fb').className = 'fb ' + cls; $('fb').textContent = msg; }
+
+/* Események */
+$('topics').addEventListener('click', e => {
+  const b = e.target.closest('.topic'); if (!b) return;
+  state.topic = b.dataset.id; save(); renderTopics(); newQuestion();
+});
+$('levels').addEventListener('click', e => {
+  const b = e.target.closest('.lv'); if (!b) return;
+  state.level = Number(b.dataset.id); save(); renderLevels(); newQuestion();
+});
+$('bCheck').addEventListener('click', check);
+$('bNext').addEventListener('click', newQuestion);
+$('bReveal').addEventListener('click', reveal);
+$('bHint').addEventListener('click', () => { hintShown = true; renderRule(); setFb('info', 'A szabály látható alul.'); });
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && finished && document.activeElement !== $('bNext')) { e.preventDefault(); newQuestion(); }
+});
+let resetArmed = false, resetTimer = null;
+$('bReset').addEventListener('click', () => {
+  const b = $('bReset');
+  if (!resetArmed) {
+    resetArmed = true; b.textContent = 'Biztosan törlöd? Kattints még egyszer.'; b.classList.add('warn');
+    resetTimer = setTimeout(() => { resetArmed = false; b.textContent = 'Eredmények törlése'; b.classList.remove('warn'); }, 4000);
+    return;
+  }
+  clearTimeout(resetTimer); resetArmed = false; b.textContent = 'Eredmények törlése'; b.classList.remove('warn');
+  state.stats = {}; state.streak = 0; save(); renderTopics(); renderTally();
+});
+
+load(); renderTopics(); renderLevels(); renderTally(); newQuestion();
+</script>
+</body>
+</html>
